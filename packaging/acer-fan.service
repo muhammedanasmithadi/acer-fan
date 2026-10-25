@@ -1,0 +1,19 @@
+[Unit]
+Description=Acer Fan Daemon - automatic fan curves for Acer Aspire A715-79G
+After=sysinit.target systemd-modules-load.service
+Wants=systemd-modules-load.service
+
+[Service]
+Type=simple
+RuntimeDirectory=acer-fan
+RuntimeDirectoryMode=0755
+ExecStart=/usr/local/bin/acer-fand
+ExecStop=/bin/sh -c '( flock -x 9; printf stop\n > /run/acer-fan/cmd ) 9<>/run/acer-fan/cmd'
+TimeoutStopSec=2
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

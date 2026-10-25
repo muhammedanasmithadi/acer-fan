@@ -1,0 +1,15 @@
+#!/bin/sh
+# Set a fixed manual fan speed (0-100).
+# Usage: fan-speed <0-100>
+
+set -eu
+
+if [ $# -ne 1 ]; then
+    echo "usage: fan-speed <0-100>" >&2
+    exit 2
+fi
+
+(
+    flock -x 9
+    printf 'speed %s\n' "$1" > /run/acer-fan/cmd
+) 9<>/run/acer-fan/cmd

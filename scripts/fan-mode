@@ -1,0 +1,47 @@
+#!/bin/sh
+# Send a mode/profile/speed command to acer-fand.
+# Usage: fan-mode auto|firmware-auto|manual <0-100>|off
+#        fan-mode profile <name>
+#        fan-mode speed <0-100>
+
+set -eu
+
+usage() {
+    echo "usage: fan-mode auto|firmware-auto|manual <0-100>|off" >&2
+    echo "       fan-mode profile <name>" >&2
+    echo "       fan-mode speed <0-100>" >&2
+}
+
+if [ $# -lt 1 ]; then
+    usage
+    exit 2
+fi
+
+case "$1" in
+    auto|firmware-auto|manual|off)
+        if [ "$1" = manual ]; then
+            [ $# -eq 2 ] || { usage; exit 2; }
+            cmd="set manual $2"
+        else
+            cmd="set $1"
+        fi
+        ;;
+    profile)
+        [ $# -eq 2 ] || { usage; exit 2; }
+        cmd="profile $2"
+        ;;
+    speed)
+        [ $# -eq 2 ] || { usage; exit 2; }
+        cmd="speed $2"
+        ;;
+    *)
+        usage
+        exit 2
+        ;;
+esac
+
+# Hold the command file lock while replacing its contents.
+(
+    flock -x 9
+    printf '%s\n' "$cmd" > /run/acer-fan/cmd
+) 9<>/run/acer-fan/cmd

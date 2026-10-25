@@ -1,0 +1,18 @@
+# Rust build artifacts
+/target/
+
+# Kernel module build artifacts
+/driver/*.o
+/driver/*.ko
+/driver/*.mod
+/driver/*.mod.c
+/driver/*.mod.o
+/driver/.*.cmd
+/driver/.module-common.o
+/driver/modules.order
+/driver/Module.symvers
+/driver/*.xz
+
+# Editor and OS files
+.DS_Store
+*~

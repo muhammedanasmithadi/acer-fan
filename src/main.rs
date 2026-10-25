@@ -220,10 +220,12 @@ impl FanLogic {
     }
 
     fn manage_critical_temperature(&self, temp: i32, speed: i32) -> i32 {
-        if temp >= 90 {
-            speed.max(40)
+        if temp >= 95 {
+            speed.max(100)
+        } else if temp >= 90 {
+            speed.max(60)
         } else if temp >= 80 {
-            speed.max(30)
+            speed.max(40)
         } else {
             speed
         }
@@ -354,19 +356,31 @@ impl DaemonState {
             ["manual", speed] | ["set", "manual", speed] => {
                 if let Ok(n) = speed.parse::<i32>() {
                     if (0..=100).contains(&n) {
-                        self.config.manual_speed = n;
-                        self.config.mode = Mode::Manual;
-                        let _ = write_sysfs(sysfs_path("/fan_mode"), "manual");
-                        self.last_written = None;
-                        persist_config(&self.config);
+                        if n == 0 {
+                            self.config.mode = Mode::Off;
+                            let _ = write_sysfs(sysfs_path("/fan_mode"), "manual");
+                            let _ = write_sysfs(sysfs_path("/fan1_speed"), "0");
+                            let _ = write_sysfs(sysfs_path("/fan2_speed"), "0");
+                            let _ = write_sysfs(sysfs_path("/fan3_speed"), "0");
+                            self.last_written = Some(0);
+                        } else {
+                            self.config.manual_speed = n;
+                            self.config.mode = Mode::Manual;
+                            let _ = write_sysfs(sysfs_path("/fan_mode"), "manual");
+                            self.last_written = None;
+                            persist_config(&self.config);
+                        }
                     }
                 }
             }
             ["off"] | ["set", "off"] => {
                 self.config.mode = Mode::Off;
                 let _ = write_sysfs(sysfs_path("/fan_mode"), "manual");
-                self.last_written = None;
-                persist_config(&self.config);
+                let _ = write_sysfs(sysfs_path("/fan1_speed"), "0");
+                let _ = write_sysfs(sysfs_path("/fan2_speed"), "0");
+                let _ = write_sysfs(sysfs_path("/fan3_speed"), "0");
+                self.last_written = Some(0);
+                // Keep "off" in memory only; do not make it the boot default.
             }
             ["profile", name] => {
                 self.apply_profile(name);
@@ -374,11 +388,20 @@ impl DaemonState {
             ["speed", n] => {
                 if let Ok(n) = n.parse::<i32>() {
                     if (0..=100).contains(&n) {
-                        self.config.manual_speed = n;
-                        self.config.mode = Mode::Manual;
-                        let _ = write_sysfs(sysfs_path("/fan_mode"), "manual");
-                        self.last_written = None;
-                        persist_config(&self.config);
+                        if n == 0 {
+                            self.config.mode = Mode::Off;
+                            let _ = write_sysfs(sysfs_path("/fan_mode"), "manual");
+                            let _ = write_sysfs(sysfs_path("/fan1_speed"), "0");
+                            let _ = write_sysfs(sysfs_path("/fan2_speed"), "0");
+                            let _ = write_sysfs(sysfs_path("/fan3_speed"), "0");
+                            self.last_written = Some(0);
+                        } else {
+                            self.config.manual_speed = n;
+                            self.config.mode = Mode::Manual;
+                            let _ = write_sysfs(sysfs_path("/fan_mode"), "manual");
+                            self.last_written = None;
+                            persist_config(&self.config);
+                        }
                     }
                 }
             }
@@ -404,7 +427,8 @@ fn load_config() -> Config {
                 match key.trim() {
                     "mode" => {
                         if let Some(mode) = Mode::parse(value.trim()) {
-                            config.mode = mode;
+                            // Fans off is a temporary state, not a boot default.
+                            config.mode = if mode == Mode::Off { Mode::Auto } else { mode };
                         }
                     }
                     "profile" => {

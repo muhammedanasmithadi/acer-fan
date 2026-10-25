@@ -1,15 +1,21 @@
 # acer-fan
 
-Fan control for the Acer Aspire A715-79G using its Clevo/ACPI fan
-interface, with a self-owned kernel driver and a small Rust daemon.
+Fan control for the Acer Aspire A715-79G. It uses the Clevo/ACPI fan
+interface and ships a kernel driver plus a Rust daemon.
 
 ## What it does
 
-- Loads `acer_fan` at boot
-- Exposes fan temperatures and speeds through sysfs
-- Runs `acer-fand`, which applies a temperature-based fan curve
-- Provides `fan-mode` and `fan-speed` commands
+- Loads `acer_fan` at boot through DKMS
+- Exposes fan temperatures and speeds in sysfs
+- Runs `acer-fand` to apply a temperature based fan curve
+- Accepts commands through `fan-mode` and `fan-speed`
 - Supports profiles: `silent`, `quiet`, `balanced`, `cool`, `freezy`, `custom`
+
+## Requirements
+
+- Linux with systemd
+- Kernel headers, compiler, and DKMS
+- Rust toolchain
 
 ## Quick start
 
@@ -30,10 +36,19 @@ fan-mode profile balanced
 fan-speed 40
 ```
 
+`fan-mode auto` uses the daemon curve. `fan-mode firmware-auto` lets
+the firmware control the fans.
+
 ## Files
 
 - `driver/` - `acer_fan` kernel module
 - `src/` - `acer-fand` daemon
-- `scripts/` - install, uninstall, validation, control scripts
-- `packaging/` - systemd unit and module autoload
+- `scripts/` - install, uninstall, validation, and control scripts
+- `packaging/` - systemd unit and module autoload files
 - `docs/architecture.md` - design notes
+
+## Uninstall
+
+```sh
+sudo ./scripts/uninstall.sh
+```

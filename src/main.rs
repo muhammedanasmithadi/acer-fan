@@ -582,31 +582,45 @@ fn main() {
 
         match state.config.mode {
             Mode::Auto => {
-                let t0 = read_i32(sysfs_path("/fan1_temp"));
-                let t1 = read_i32(sysfs_path("/fan2_temp"));
-                let t2 = read_i32(sysfs_path("/fan3_temp"));
-                if let (Ok(t0), Ok(t1), Ok(t2)) = (t0, t1, t2) {
-                    state.cpu.report_temperature(t0);
-                    state.gpu.report_temperature(t1);
-                    state.gpu2.report_temperature(t2);
-                    let s0 = state.cpu.speed();
-                    let s1 = state.gpu.speed();
-                    let s2 = state.gpu2.speed();
-                    if s0 >= 0 && s1 >= 0 && s2 >= 0 {
-                        let max_speed = s0.max(s1).max(s2);
-                        if state.last_written != Some(max_speed) {
-                            let ok1 =
-                                write_sysfs(sysfs_path("/fan1_speed"), &max_speed.to_string())
-                                    .is_ok();
-                            let ok2 =
-                                write_sysfs(sysfs_path("/fan2_speed"), &max_speed.to_string())
-                                    .is_ok();
-                            let ok3 =
-                                write_sysfs(sysfs_path("/fan3_speed"), &max_speed.to_string())
-                                    .is_ok();
-                            if ok1 && ok2 && ok3 {
-                                state.last_written = Some(max_speed);
-                            }
+                let mut speeds = Vec::new();
+                let mut any_valid = false;
+
+                if let Ok(t) = read_i32(sysfs_path("/fan1_temp")) {
+                    state.cpu.report_temperature(t);
+                    let s = state.cpu.speed();
+                    if s >= 0 {
+                        speeds.push(s);
+                        any_valid = true;
+                    }
+                }
+                if let Ok(t) = read_i32(sysfs_path("/fan2_temp")) {
+                    state.gpu.report_temperature(t);
+                    let s = state.gpu.speed();
+                    if s >= 0 {
+                        speeds.push(s);
+                        any_valid = true;
+                    }
+                }
+                if let Ok(t) = read_i32(sysfs_path("/fan3_temp")) {
+                    state.gpu2.report_temperature(t);
+                    let s = state.gpu2.speed();
+                    if s >= 0 {
+                        speeds.push(s);
+                        any_valid = true;
+                    }
+                }
+
+                if any_valid && !speeds.is_empty() {
+                    let max_speed = speeds.into_iter().max().unwrap();
+                    if state.last_written != Some(max_speed) {
+                        let ok1 =
+                            write_sysfs(sysfs_path("/fan1_speed"), &max_speed.to_string()).is_ok();
+                        let ok2 =
+                            write_sysfs(sysfs_path("/fan2_speed"), &max_speed.to_string()).is_ok();
+                        let ok3 =
+                            write_sysfs(sysfs_path("/fan3_speed"), &max_speed.to_string()).is_ok();
+                        if ok1 && ok2 && ok3 {
+                            state.last_written = Some(max_speed);
                         }
                     }
                 } else {

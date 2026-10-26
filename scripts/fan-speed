@@ -9,6 +9,9 @@ if [ $# -ne 1 ]; then
     exit 2
 fi
 
+case "$1" in ''|*[!0-9]*) echo "usage: fan-speed <0-100>" >&2; exit 2 ;; esac
+[ "$1" -ge 0 ] && [ "$1" -le 100 ] || { echo "usage: fan-speed <0-100>" >&2; exit 2; }
+
 (
     flock -x 9
     printf 'speed %s\n' "$1" > /run/acer-fan/cmd

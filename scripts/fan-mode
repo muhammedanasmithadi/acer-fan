@@ -21,6 +21,8 @@ case "$1" in
     auto|firmware-auto|manual|off)
         if [ "$1" = manual ]; then
             [ $# -eq 2 ] || { usage; exit 2; }
+            case "$2" in ''|*[!0-9]*) usage; exit 2 ;; esac
+            [ "$2" -ge 0 ] && [ "$2" -le 100 ] || { usage; exit 2; }
             cmd="set manual $2"
         else
             cmd="set $1"
@@ -32,6 +34,8 @@ case "$1" in
         ;;
     speed)
         [ $# -eq 2 ] || { usage; exit 2; }
+        case "$2" in ''|*[!0-9]*) usage; exit 2 ;; esac
+        [ "$2" -ge 0 ] && [ "$2" -le 100 ] || { usage; exit 2; }
         cmd="speed $2"
         ;;
     *)

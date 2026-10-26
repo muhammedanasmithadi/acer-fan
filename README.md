@@ -52,3 +52,7 @@ the firmware control the fans.
 ```sh
 sudo ./scripts/uninstall.sh
 ```
+
+## License
+
+GPL-2.0-or-later.

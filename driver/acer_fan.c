@@ -468,4 +468,5 @@ module_platform_driver(acer_fan_platform_driver);
 MODULE_AUTHOR("Derived from tuxedo-drivers");
 MODULE_DESCRIPTION("Clevo/ACPI fan control for Acer Aspire A715-79G");
 MODULE_LICENSE("GPL v2");
+MODULE_VERSION("1.0.0");
 MODULE_DEVICE_TABLE(acpi, acer_fan_acpi_ids);
